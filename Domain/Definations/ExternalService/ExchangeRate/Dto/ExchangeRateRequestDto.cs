@@ -1,4 +1,4 @@
-﻿namespace Domain.Definations.ExternalService.Dto;
+﻿namespace Domain.Definations.ExternalService.ExchangeRate.Dto;
 
 public record ExchangeRateRequestDto
 {

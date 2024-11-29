@@ -1,5 +1,5 @@
-﻿using Domain.Definations.ExternalService;
-using Domain.Definations.ExternalService.Dto;
+﻿using Domain.Definations.ExternalService.ExchangeRate;
+using Domain.Definations.ExternalService.ExchangeRate.Dto;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
