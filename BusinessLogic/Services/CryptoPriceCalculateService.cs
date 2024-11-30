@@ -11,6 +11,7 @@ public class CryptoPriceCalculateService(
     public async Task<CryptoQuoteResponseDto> GetCryptoQuoteAsync(CryptoQuoteRequestDto request, CancellationToken ct)
     {
         var usdPrice = await coinMarketCapExternalService.GetCryptoPriceInUSDAsync(request.CryptoCode, ct);
+        if (usdPrice is null) return null;
 
         var exchangeRates = await exchangeRatesExternalService.GetConvertedPricesAsync(ct);
 

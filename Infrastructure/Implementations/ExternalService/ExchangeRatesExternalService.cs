@@ -1,8 +1,6 @@
 ﻿using System.Net.Http.Json;
 using Domain.Definations.ExternalService.ExchangeRate;
-using Domain.Definations.ExternalService.ExchangeRate.Dto;
 using Microsoft.Extensions.Logging;
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 
