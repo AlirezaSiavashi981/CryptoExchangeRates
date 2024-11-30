@@ -15,7 +15,7 @@ public static class IoCContainer
 
         // IoC External
         services.AddScoped<IExchangeRatesExternalService, ExchangeRatesExternalService>();
-        services.AddScoped<ICoinMarketCapExternalService, CoinMarketCapService>();
+        services.AddScoped<ICoinMarketCapExternalService, CoinMarketCapExternalService>();
         //services.AddScoped<IHttpClientFactory>();
         
         return services;

@@ -1,8 +1,8 @@
 ﻿using System.Net.Http.Json;
 using Domain.Definations.ExternalService.ExchangeRate;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Domain.Definations.ExternalService.ExchangeRate.Dto;
 
 namespace Infrastructure.Implementations.ExternalService;
 
@@ -24,23 +24,13 @@ public class ExchangeRatesExternalService(
 
         try
         {
-            var httpResponse = await httpClient.GetFromJsonAsync<dynamic>(uri, cancellationToken: ct);
-            if (httpResponse == null)
-                throw new Exception("Failed to fetch exchange rates from ExchangeRatesAPI.");
-
-            var result = await httpResponse.Content.ReadAsStringAsync(ct);
-            if (!httpResponse.IsSuccessStatusCode)
+            var httpResponse = await httpClient.GetFromJsonAsync<ExchangeRatesResponse>(uri, cancellationToken: ct);
+            if (httpResponse == null || httpResponse.Rates == null)
             {
-                logger.LogError($"Status Code : {httpResponse.StatusCode}");
-
-                throw new Exception("The request encountered an error.");
+                throw new Exception("Failed to fetch exchange rates or rates data is missing.");
             }
 
-            var response = JsonSerializer.Deserialize<decimal>(result);
-            if (response == null)
-                throw new Exception("The data result is empty.");
-
-            return response.Rates ?? new Dictionary<string, decimal>();
+            return httpResponse.Rates;
         }
         catch (Exception ex)
         {

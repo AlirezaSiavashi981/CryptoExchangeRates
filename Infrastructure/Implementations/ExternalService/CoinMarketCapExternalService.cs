@@ -1,15 +1,16 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Domain.Definations.ExternalService.CoinMarketCap;
+using Domain.Definations.ExternalService.CoinMarketCap.Dtos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Implementations.ExternalService;
 
-public class CoinMarketCapService(
+public class CoinMarketCapExternalService(
     IHttpClientFactory client,
     IConfiguration config,
-    ILogger<CoinMarketCapService> logger)
+    ILogger<CoinMarketCapExternalService> logger)
     : ICoinMarketCapExternalService
 {
     public async Task<decimal?> GetCryptoPriceInUSDAsync(string cryptoCode, CancellationToken ct)
@@ -29,23 +30,15 @@ public class CoinMarketCapService(
 
         try
         {
-            var httpResponse = await httpClient.GetFromJsonAsync<dynamic>(uri, cancellationToken: ct);
-            if (httpResponse == null)
-                throw new Exception("Failed to fetch cryptocurrency price from CoinMarketCap API.");
+            var httpResponse = await httpClient.GetFromJsonAsync<CryptoResponse>(uri, cancellationToken: ct);
 
-            var result = await httpResponse.Content.ReadAsStringAsync(ct);
-            if (!httpResponse.IsSuccessStatusCode)
+
+            if (httpResponse == null || httpResponse.Data == null || !httpResponse.Data.ContainsKey(cryptoCode))
             {
-                logger.LogError($"Status Code : {httpResponse.StatusCode}");
-
-                throw new Exception("The request encountered an error.");
+                throw new Exception("The data result is empty or invalid.");
             }
 
-            var response = JsonSerializer.Deserialize<decimal>(result);
-            if (response == null)
-                throw new Exception("The data result is empty.");
-
-            var usdPrice = response.Data[cryptoCode].Quote["USD"].Price;
+            var usdPrice = httpResponse!.Data[cryptoCode].Quote["USD"].Price;
 
             return usdPrice;
         }
