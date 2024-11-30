@@ -4,5 +4,5 @@ namespace Domain.Definations.ExternalService.ExchangeRate;
 
 public interface IExchangeRatesExternalService
 {
-    Task<ExchangeRateResponseDto> GetExchangeRates(ExchangeRateRequestDto request, CancellationToken ct);
+    Task<Dictionary<string, decimal>> GetConvertedPricesAsync(CancellationToken ct);
 }

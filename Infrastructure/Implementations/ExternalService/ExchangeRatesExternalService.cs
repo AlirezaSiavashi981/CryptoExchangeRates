@@ -1,99 +1,53 @@
-﻿using Domain.Definations.ExternalService.ExchangeRate;
+﻿using System.Net.Http.Json;
+using Domain.Definations.ExternalService.ExchangeRate;
 using Domain.Definations.ExternalService.ExchangeRate.Dto;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
+using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Implementations.ExternalService;
 
-public class ExchangeRatesExternalService : IExchangeRatesExternalService
+public class ExchangeRatesExternalService(
+    IHttpClientFactory client,
+    ILogger<ExchangeRatesExternalService> logger,
+    IConfiguration config)
+    : IExchangeRatesExternalService
 {
-    private readonly IHttpClientFactory _httpClient;
-    private readonly ILogger<ExchangeRatesExternalService> _logger;
-
-    public ExchangeRatesExternalService(IHttpClientFactory httpClient, ILogger<ExchangeRatesExternalService> logger)
+    public async Task<Dictionary<string, decimal>> GetConvertedPricesAsync(CancellationToken ct)
     {
-        _httpClient = httpClient;
-        _logger = logger;
-    }
+        var httpClient = client.CreateClient();
 
-    #region Config
+        // configuration 
+        var baseUrl = config["ExchangeRatesConfig:BaseUrl"];
+        var apiKey = config["ExchangeRatesConfig:ApiKey"];
 
-    /// <summary>
-    /// In some cases, a safer and better way is to make the api call configurations secret in appsettings.
-    /// </summary>
-    private string BaseUrl = "https://api.exchangeratesapi.io";
-    private string Token = "03f0e3b7-22d1-42ed-97c5-77cfe33d9eac";
-
-    #endregion
-
-    public async Task<ExchangeRateResponseDto> GetExchangeRates(ExchangeRateRequestDto request, CancellationToken ct)
-    {
-        var httpClient = _httpClient.CreateClient();
-
-        // authenticate
-        httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {Token}");
-
-        var jserializeData = JsonSerializer.Serialize(new
-        {
-            Base = request.Base,
-            symbols = request.Symbols,
-        });
-
-        var uri = $"{BaseUrl}/v1/latest";
+        var uri = $"{baseUrl}/v1/latest?access_key={apiKey}";
 
         try
         {
-            var httpResponse = await httpClient
-                .PostAsync(uri, new StringContent(jserializeData, Encoding.UTF8, "application/json"), ct);
+            var httpResponse = await httpClient.GetFromJsonAsync<dynamic>(uri, cancellationToken: ct);
+            if (httpResponse == null)
+                throw new Exception("Failed to fetch exchange rates from ExchangeRatesAPI.");
 
             var result = await httpResponse.Content.ReadAsStringAsync(ct);
             if (!httpResponse.IsSuccessStatusCode)
             {
-                _logger.LogError($"Status Code : {httpResponse.StatusCode}");
+                logger.LogError($"Status Code : {httpResponse.StatusCode}");
 
-                return new ExchangeRateResponseDto
-                {
-                    Base = null,
-                    Rates = null,
-                    Status = false,
-                    TimeStamp = DateTime.Now,
-                };
+                throw new Exception("The request encountered an error.");
             }
 
-            var response = JsonSerializer.Deserialize<ExchangeRateResponseDto>(result);
+            var response = JsonSerializer.Deserialize<decimal>(result);
             if (response == null)
-                return new ExchangeRateResponseDto
-                {
-                    Base = null,
-                    Status = false,
-                    Rates = null,
-                    TimeStamp = DateTime.Now,
-                };
+                throw new Exception("The data result is empty.");
 
-
-            return new ExchangeRateResponseDto
-            {
-                Base = response.Base,
-                Status = response.Status,
-                Rates = response.Rates,
-                TimeStamp = response.TimeStamp,
-            };
+            return response.Rates ?? new Dictionary<string, decimal>();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError($"Error Message : {e.Message} & Exception : {e.InnerException}");
-
-            return new ExchangeRateResponseDto
-            {
-                Base = null,
-                Status = false,
-                Rates = null,
-                TimeStamp = DateTime.Now,
-            };
+            Console.WriteLine(ex);
+            throw;
         }
-
     }
 }
