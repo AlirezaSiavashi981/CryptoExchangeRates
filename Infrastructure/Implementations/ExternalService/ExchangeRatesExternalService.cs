@@ -34,7 +34,7 @@ public class ExchangeRatesExternalService(
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            logger.LogError(ex ,ex.Message);
             throw;
         }
     }

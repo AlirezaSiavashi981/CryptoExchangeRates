@@ -44,7 +44,7 @@ public class CoinMarketCapExternalService(
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError(e , e.Message);
             throw;
         }
     }
