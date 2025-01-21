@@ -17,7 +17,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> GetCryptoQuote([FromBody] CryptoQuoteModel model, CancellationToken ct)
+        public async Task<IActionResult> CryptoQuote([FromBody] CryptoQuoteModel model, CancellationToken ct)
         {
             var result = await _calculateService.GetCryptoQuoteAsync(new CryptoQuoteRequestDto
             {
